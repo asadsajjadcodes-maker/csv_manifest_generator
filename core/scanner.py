@@ -38,4 +38,47 @@ def get_file_metadata(file_path: Path) -> Optional[dict[str, Any]]:
         return None
 
 
-    
+#================================================================================================================================
+
+def scan_directory(target_dir: str | Path, extension_filter: Optional[str] = None) -> List[dict[str, Any]]:
+
+    # Convert string or Path object to the absolute resolved Path instance.
+    base_path = Path(target_dir).resolve()
+
+    # Empty list to add the metadata dictionaries.
+    manifest_data: list[dict[str, Any]] = []
+
+    # Validate the directory.
+    if not base_path.exists() or not base_path.is_dir():
+        # Raise an ValueError if Path dose not exist or is not a directory.
+        raise ValueError(f"Invalid dir path : '{base_path}'")
+
+    logger.info(f"Starting scan in directory: '{base_path}'")
+
+    # Normalize the extension 
+    target_ext = extension_filter.lower().strip() if extension_filter else None
+    # make extension lower and remove spaces from start and end if extension is given else None 
+
+    if target_ext and not target_ext.startswith("."):
+        target_ext = f".{target_ext}"
+
+
+    for path in base_path.rglob("."):
+        if path.is_file():
+            # Apply file extension filter if set: skip if it does not match
+            if target_ext and path.suffix.lower() != target_ext:
+                continue
+            # Extract file metadata dictionary using the helper function
+            metadata = get_file_metadata(path)
+
+            # Append metadata to the results list  if successfully retrieved.
+            if metadata:
+                manifest_data.append(metadata)
+
+
+    logger.info(f"Scan complete. Found '{len(manifest_data)}' matching files.")
+
+    # return the collected data.
+    return manifest_data
+
+#================================================================================================================
