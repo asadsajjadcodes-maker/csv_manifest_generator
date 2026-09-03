@@ -1,5 +1,5 @@
 import csv
-from logger import setup_logger
+from utilities.logger import setup_logger
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Optional
@@ -82,3 +82,40 @@ def scan_directory(target_dir: str | Path, extension_filter: Optional[str] = Non
     return manifest_data
 
 #================================================================================================================
+
+
+def export_to_csv(manifested_data: list[dict[str, Any]], output_file: str | Path) -> Path:
+
+    # Create the Path object.
+    output_path = Path(output_file).resolve()
+
+    # Create parant folders if dont exist.
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Check if there is no data.
+    if not manifested_data:
+        logger.warning("No data is available to export.")
+
+        return output_path
+
+    # Define strict column header ordering for CSV document.
+    fieldnames = ["Filename", "Extension", "Parent_Folder", "Size_MB", "Last_Modified", "Full_Path"]
+
+    with open(output_path, mode="w", newline="", encoding="utf-8") as csv_file:
+        # Dictwritter to define fieldnames order 
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        # Write the header row(column names).
+        writer.writeheader()
+        # Write all rows from manifest dictionary list.
+        writer.writerows(manifested_data)
+
+    logger.info(f"Successfully generated manifest CSV: {output_path}")
+    return output_path
+
+
+
+
+         
+    
+
+
