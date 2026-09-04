@@ -3,6 +3,7 @@ from core.scanner import scan_directory, export_to_csv
 
 
 
+
 # Test scanning the current working directory
 target_folder = Path.cwd()
     
