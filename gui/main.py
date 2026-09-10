@@ -139,6 +139,33 @@ class MainWindow(QMainWindow):
            QMessageBox.critical(self, "Path Error", f"The directory does not exist: \n{target_path}")
            return
        
+       # Clear old data and set button states before starting scan. 
+       self.scanned_data.clear()
+       self.results_table.setRowCount(0)
+       self.scan_btn.setEnabled(False)
+       self.cancel_btn.setEnabled(True)
+       self.export_btn.setEnabled(False)
+
+       ext_filter = self.filter_input.text().strip() or None
+
+       # Instantiate background thread and worker instance 
+       self.scan_thread = QThread()
+       self.scan_worker = ScanWorker(target_path, extension_filter=ext_filter)
+
+       # Move worker thread to background to keep UI responsive.
+       self.scan_worker.moveToThread(self.scan_thread)
+
+       # Connect thread startup signal to worker entry method
+       self.scan_thread.started.connect(self.scan_worker.run) # this will call the run method of the ScanWorker class when the thread starts
+
+
+       # Connect worker signals to GUI update slots for real-time feedback
+       self
+
+
+
+
+
            
        
 
