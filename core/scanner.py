@@ -63,7 +63,7 @@ def scan_directory(target_dir: str | Path, extension_filter: Optional[str] = Non
         target_ext = f".{target_ext}"
 
 
-    for path in base_path.rglob("."):
+    for path in base_path.rglob("*"):
         if path.is_file():
             # Apply file extension filter if set: skip if it does not match
             if target_ext and path.suffix.lower() != target_ext:
