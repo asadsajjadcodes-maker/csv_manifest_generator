@@ -124,7 +124,16 @@ class MainWindow(QMainWindow):
         
 
     def browse_directory(self):
-        pass
+        # opens file selection window  
+        selected_folder = QFileDialog.getExistingDirectory(
+            self,
+            "Choose a folder to scan"
+        )
+
+        # if user selects the folder 
+        if selected_folder:
+            self.folder_input.setText(selected_folder) # put the selected folder path in the folder input line
+
 
     def start_scan(self):
        target_path_str = self.folder_input.text().strip() # takes the text from inside the QLineEdit
@@ -160,7 +169,7 @@ class MainWindow(QMainWindow):
 
 
        # Connect worker signals to GUI update slots for real-time feedback
-       self
+       
 
 
 

@@ -2,7 +2,7 @@
 
 CSV Manifest Generator is a Python desktop project for auditing directory trees and producing structured CSV inventories of the files they contain. It is built with PySide6 and separates the scanning, background-work, logging, and user-interface layers so the application can evolve into a responsive file-auditing tool.
 
-> **Project status:** Active development. The scanning and CSV-export modules are implemented, while several GUI workflows (folder selection, scan lifecycle wiring, cancellation handling, and export interaction) are still being completed. See [Development status](#development-status).
+> **Project status:** Active development. The scanning and CSV-export modules are implemented, and the GUI can now select a target folder. Scan lifecycle wiring, cancellation handling, and export interaction are still being completed. See [Development status](#development-status).
 
 ## What it does
 
@@ -102,11 +102,15 @@ The project already has the main building blocks in place:
 
 The next implementation tasks are:
 
-1. Finish folder selection and scan-thread signal connections in `gui/main.py`.
+1. Finish scan-thread signal connections in `gui/main.py`.
 2. Start and clean up the worker thread reliably after every scan.
 3. Implement cancellation behavior and restore GUI controls after cancellation or failure.
 4. Add an output-file dialog and connect it to `export_to_csv`.
 5. Add automated tests and a dependency manifest such as `requirements.txt` or `pyproject.toml`.
+
+### Completed: Day 1
+
+- Added a **Browse** workflow that opens a folder picker and places the selected target directory into the application input field.
 
 ## Operational notes
 
