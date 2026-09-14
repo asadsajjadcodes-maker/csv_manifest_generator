@@ -1,375 +1,502 @@
 # CSV Manifest Generator
 
-A professional-grade Python desktop application for comprehensive directory auditing and CSV inventory generation. **CSV Manifest Generator** recursively scans file systems, extracts detailed metadata, and exports structured reports—all through an intuitive, responsive graphical interface built with PySide6.
+A desktop file-system auditing and inventory tool built with **Python** and **PySide6**.
 
-> **Status:** Production-ready | **License:** MIT | **Python:** 3.10+ | **UI Framework:** PySide6
+CSV Manifest Generator recursively scans a selected directory, collects useful file metadata, presents the results in a responsive desktop interface, and exports the collected inventory to a structured CSV manifest.
 
----
+It is designed as a practical automation utility as well as a clean example of separating **core file-system logic**, **background execution**, **GUI presentation**, and **logging**.
 
-## ✨ Features
+## Overview
 
-- **🔍 Deep Directory Scanning** – Recursively traverse any directory structure and extract file metadata
-- **🎯 Flexible Filtering** – Optionally limit scans to specific file extensions (e.g., `.py`, `.pdf`, `.json`)
-- **📊 Comprehensive Metadata** – Capture filename, extension, size (MB), last modified timestamp, parent folder, and absolute path
-- **⚡ Non-blocking UI** – Background worker threads keep the GUI responsive during long scans
-- **✋ Cancellation Support** – Gracefully stop scans at any time without data corruption
-- **📝 Multi-layer Logging** – Console, file, and GUI-integrated logging for debugging and monitoring
-- **💾 CSV Export** – Export audit results with consistent column ordering and proper formatting
-- **🛡️ Error Handling** – Robust permission error handling and file access exception management
+Managing large directories manually makes it difficult to answer simple questions:
 
----
+* What files are actually inside this directory tree?
+* Which file types are present?
+* How large are the files?
+* Where are they located?
+* When were they last modified?
+* Can the inventory be exported into a format that can be searched, filtered, or processed elsewhere?
 
-## 📋 Quick Start
+This application automates that workflow.
 
-### Prerequisites
+The application follows a simple pipeline:
 
-- **Python 3.10+** ([Download](https://www.python.org/downloads/))
-- A terminal or command prompt
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/csv_manifest_generator.git
-   cd csv_manifest_generator
-   ```
-
-2. **Create a virtual environment:**
-   ```bash
-   python -m venv venv
-   ```
-
-3. **Activate the virtual environment:**
-   - **Windows:**
-     ```bash
-     venv\Scripts\activate
-     ```
-   - **macOS/Linux:**
-     ```bash
-     source venv/bin/activate
-     ```
-
-4. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Running the Application
-
-**Start the GUI application:**
-```bash
-python -m gui.main
+```text
+Select Directory
+       ↓
+Validate Input
+       ↓
+Recursive Scan
+       ↓
+Apply Extension Filter
+       ↓
+Extract File Metadata
+       ↓
+Display Results in GUI
+       ↓
+Export CSV Manifest
 ```
 
-Or directly:
-```bash
-python gui/main.py
+For larger directory trees, the scan runs through a background `QThread`, keeping the PySide6 interface responsive while the file system is being inspected.
+
+## Key Features
+
+### Recursive file-system scanning
+
+Scans a target directory recursively using Python's `pathlib` and discovers files throughout nested folders.
+
+### Extension filtering
+
+The scanner can process every file or restrict the scan to a specific extension such as:
+
+```text
+py
+pdf
+json
+png
 ```
 
-The application window will open. Select a directory, optionally add an extension filter, and click **Start Scan**.
+The scanner normalizes the filter so both `pdf` and `.pdf` are accepted.
 
----
+### File metadata extraction
 
-## 🎮 Usage Guide
+Each successfully inspected file produces a structured metadata record containing:
 
-### GUI Walkthrough
+| Field           | Description                                            |
+| --------------- | ------------------------------------------------------ |
+| `Filename`      | File name including extension                          |
+| `Extension`     | Lowercase extension, or `No_extension`                 |
+| `Parent_Folder` | Absolute path to the containing directory              |
+| `Size_MB`       | File size in megabytes, rounded to four decimal places |
+| `Last_Modified` | Last modification time as `YYYY-MM-DD HH:MM:SS`        |
+| `Full_Path`     | Absolute path to the file                              |
 
-1. **Target Directory** – Click "Browse" to select the directory to scan
-2. **Extension Filter** (Optional) – Enter file extensions without the dot (e.g., `py`, `pdf`, `json`). Leave blank to scan all files
-3. **Start Scan** – Begin the directory scan. The status label updates in real-time
-4. **Cancel Scan** – Stop the scan at any time (available only during active scans)
-5. **View Results** – Results display in the results table with sortable columns
-6. **Export to CSV** – Save the audit report to a CSV file in the `logs/` directory
+### Responsive PySide6 interface
 
-### Command-Line Testing
+The GUI provides:
 
-**Test the core scanner:**
-```bash
-python test.py
+* Directory selection through a folder browser
+* Optional extension filtering
+* Start Scan control
+* Cancel Scan control
+* Results table for discovered files
+* Live status updates
+* Integrated application log output
+* CSV export through a save-file dialog
+
+### Background scanning
+
+The GUI uses a `ScanWorker` object moved to a `QThread` so the potentially slow file-system operation does not run directly on the main GUI thread.
+
+The worker communicates with the interface through Qt signals for:
+
+* Status updates
+* Progress updates
+* Completed scan results
+* Errors
+
+### Cancellation support
+
+The worker maintains a cancellation flag that is checked during scanning. When cancellation is requested, the scanner stops processing additional paths and records the cancellation event through the logging system.
+
+### Multi-layer logging
+
+Logging is centralized and routed to three destinations:
+
+```text
+Application code
+      ├── Console handler
+      ├── File handler → logs/app.log
+      └── GUI handler → PySide6 log panel
 ```
 
-**Test the worker/signal threading:**
-```bash
-python test2.py
-```
+This makes runtime activity visible both to the user and to the developer.
 
----
+### CSV export
 
-## 📊 Manifest Schema
+Scan results are exported with a stable column order using Python's `csv.DictWriter`.
 
-The exported CSV contains the following columns:
+Parent directories for the requested output file are created automatically when necessary.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `Filename` | string | File name with extension |
-| `Extension` | string | Lowercase file extension (or `No_extension`) |
-| `Parent_Folder` | string | Absolute path to the containing directory |
-| `Size_MB` | float | File size in megabytes (rounded to 4 decimals) |
-| `Last_Modified` | string | Last modification timestamp (`YYYY-MM-DD HH:MM:SS`) |
-| `Full_Path` | string | Absolute path to the file |
+### Error handling
 
-**Example row:**
-```
-config.json,json,/home/user/project,0.0025,2024-09-14 10:32:15,/home/user/project/config.json
-```
+The scanner handles common file-system problems such as:
 
----
+* Invalid target directories
+* Permission errors
+* Files disappearing during a scan
+* CSV export failures
 
-## 🏗️ Project Architecture
+Unreadable files are logged and skipped rather than terminating the entire scan.
 
-### Directory Structure
+## Technology Stack
 
-```
+| Technology                     | Purpose                                    |
+| ------------------------------ | ------------------------------------------ |
+| **Python 3.10+**               | Application language                       |
+| **PySide6**                    | Desktop GUI and Qt integration             |
+| **pathlib**                    | File-system traversal and path management  |
+| **csv**                        | CSV manifest generation                    |
+| **logging**                    | Application and diagnostic logging         |
+| **QThread / QObject / Signal** | Background execution and GUI communication |
+
+The project uses only the Python standard library plus **PySide6** for the desktop interface.
+
+## Project Structure
+
+```text
 csv_manifest_generator/
+│
 ├── core/
-│   └── scanner.py              # Core scanning logic & CSV export
+│   └── scanner.py
+│       ├── get_file_metadata()
+│       ├── scan_directory()
+│       └── export_to_csv()
+│
 ├── workers/
-│   └── scan_worker.py          # Qt worker for background scanning
+│   └── scan_worker.py
+│       └── ScanWorker
+│
 ├── gui/
-│   ├── main.py                 # PySide6 main window & UI logic
-│   └── ui_logger.py            # Custom logging handler for GUI
+│   ├── main.py
+│   │   └── MainWindow
+│   │
+│   └── ui_logger.py
+│       └── GuiHandler
+│
 ├── utilities/
-│   └── logger.py               # Centralized logging configuration
-├── logs/                       # Generated CSV manifests (auto-created)
-├── test.py                     # Core scanner smoke tests
-├── test2.py                    # Worker/threading smoke tests
-├── requirements.txt            # Python dependencies
-└── README.md                   # This file
+│   └── logger.py
+│       └── setup_logger()
+│
+├── logs/
+│   └── Generated logs and test/output artifacts
+│
+├── manifest.csv
+├── requirements.txt
+├── test.py
+├── test2.py
+├── .gitignore
+└── README.md
 ```
 
-### Core Modules
+## Architecture
 
-#### `core.scanner`
-- **`get_file_metadata(file_path: Path) -> dict`** – Extract metadata from a single file
-- **`scan_directory(target_dir, extension_filter, is_cancelled_callback) -> list`** – Recursively scan and return file metadata
-- **`export_to_csv(data, output_file) -> Path`** – Write metadata to CSV with proper formatting
+The project is intentionally divided by responsibility.
 
-#### `workers.scan_worker`
-- **`ScanWorker`** – QObject-based worker for background scanning
-  - Signals: `status_updated`, `progress_updated`, `finished`, `error_occurred`
-  - Implements graceful cancellation via `cancel()` method
+### 1. Core scanner
 
-#### `gui.main`
-- **`MainWindow`** – Main PySide6 window with complete UI and event handling
-  - Directory selection with file browser
-  - Real-time status updates
-  - Results table with sortable columns
-  - CSV export functionality
+`core/scanner.py` contains the application-independent file-system logic.
 
-#### `utilities.logger`
-- **`setup_logger(name: str) -> logging.Logger`** – Initialize a logger with console, file, and GUI handlers
-- Logs written to `logs/app.log` with timestamps and context
+Its main responsibilities are:
 
----
-
-## 🔧 API Reference
-
-### Scanner Functions
-
-```python
-from core.scanner import scan_directory, export_to_csv
-
-# Scan a directory
-results = scan_directory(
-    target_dir="/path/to/scan",
-    extension_filter=".pdf",           # Optional
-    is_cancelled_callback=lambda: False # Optional cancellation callback
-)
-
-# Export to CSV
-output_path = export_to_csv(results, "output.csv")
+```text
+get_file_metadata()
+        ↓
+scan_directory()
+        ↓
+export_to_csv()
 ```
 
-### Worker Signals
+`get_file_metadata()` inspects one file and converts its native file-system information into a dictionary.
 
-```python
-from workers.scan_worker import ScanWorker
-from PySide6.QtCore import QThread
+`scan_directory()` validates the target directory, recursively walks it, optionally filters by extension, collects metadata, and returns a list of dictionaries.
 
-worker = ScanWorker("/path/to/scan", extension_filter="py")
-thread = QThread()
+`export_to_csv()` takes those dictionaries and serializes them into a predictable CSV structure.
 
-worker.moveToThread(thread)
-thread.started.connect(worker.run)
+### 2. Background worker
 
-# Connect to signals
-worker.status_updated.connect(lambda msg: print(f"Status: {msg}"))
-worker.progress_updated.connect(lambda count: print(f"Files: {count}"))
-worker.finished.connect(lambda data: print(f"Scan complete: {len(data)} files"))
-worker.error_occurred.connect(lambda err: print(f"Error: {err}"))
+`workers/scan_worker.py` contains `ScanWorker`, a `QObject` designed to run inside a `QThread`.
 
-thread.start()
+The worker owns the long-running scan operation while the GUI remains responsible for presentation and user interaction.
+
+This separation prevents the interface from being tightly coupled to the scanning implementation.
+
+### 3. GUI layer
+
+`gui/main.py` contains the main PySide6 window and connects the user interface to the worker and core scanner.
+
+The main window handles:
+
+* Input validation
+* Folder selection
+* Worker/thread creation
+* Signal connections
+* Table population
+* Status messages
+* Cancellation requests
+* CSV export
+
+### 4. GUI logging bridge
+
+`gui/ui_logger.py` provides `GuiHandler`, a custom logging handler that converts normal Python log records into a Qt signal.
+
+That allows the same logging system to feed the desktop log panel without duplicating logging logic.
+
+### 5. Centralized logging
+
+`utilities/logger.py` configures application loggers and attaches console, file, and GUI handlers.
+
+The file logger writes detailed diagnostic information to:
+
+```text
+logs/app.log
 ```
 
-### Logging
+## Installation
 
-```python
-from utilities.logger import setup_logger
+### Requirements
 
-logger = setup_logger(__name__)
-logger.info("Application started")
-logger.warning("Permission denied for file X")
-logger.error("Failed to export CSV")
-```
+* Python 3.10 or newer
+* `pip`
+* A supported desktop environment for PySide6
 
----
-
-## 📁 Log Files
-
-Application logs are stored in `logs/app.log` with the following format:
-```
-2024-09-14 10:32:15 [INFO] - Starting scan in directory: '/path/to/folder'
-2024-09-14 10:32:16 [WARNING] - Skipping unreadable file '/path/file': Permission denied
-2024-09-14 10:32:20 [INFO] - Scan complete. Found '42' matching files.
-```
-
----
-
-## 🛠️ Development
-
-### Running Tests
+### Clone the repository
 
 ```bash
-# Test core scanner
-python test.py
-
-# Test worker threading
-python test2.py
+git clone https://github.com/asadsajjadcodes-maker/csv_manifest_generator.git
+cd csv_manifest_generator
 ```
 
-### Code Style
+### Create a virtual environment
 
-The project follows PEP 8 conventions with the following practices:
-- Type hints for all function signatures
-- Descriptive variable names and docstrings
-- Separation of concerns (scanning, UI, threading, logging)
-- Comprehensive error handling
-
-### Adding Features
-
-1. **New Metadata Fields** – Add fields in `core/scanner.py::get_file_metadata()`
-2. **UI Enhancements** – Modify `gui/main.py`
-3. **Logging** – Use `setup_logger()` from `utilities/logger.py`
-4. **New Filters** – Extend `scan_directory()` with additional parameters
-
----
-
-## ⚠️ Error Handling
-
-The application gracefully handles:
-- **Permission Errors** – Files with restricted access are logged and skipped
-- **Invalid Paths** – Directory validation before scanning begins
-- **Large Directories** – Background threading prevents UI freezing
-- **CSV Export Failures** – Parent directory creation with error logging
-
----
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| "ModuleNotFoundError: No module named 'PySide6'" | Run `pip install -r requirements.txt` |
-| Scan is slow | This is normal for large directories. Use extension filters to speed up results |
-| Permission denied errors | Check folder permissions; the app logs these to `logs/app.log` |
-| CSV file not created | Ensure write permissions in the `logs/` directory |
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add your feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
-
----
-
-## 📧 Support
-
-For questions, issues, or suggestions, please open an [issue](https://github.com/yourusername/csv_manifest_generator/issues) on GitHub.
-
----
-
-**Built with ❤️ using PySide6** | **Python 3.10+**
+#### Windows
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install PySide6
 ```
 
-## Running the application
+#### macOS / Linux
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### Install dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+## Run the Application
 
 From the repository root:
 
-```powershell
+```bash
 python -m gui.main
 ```
 
-The window can be launched today, but the scan and export buttons are still under implementation. Until the GUI workflow is complete, use the scanner directly or run the included manual smoke tests.
+The application opens a desktop window where you can select a directory, optionally specify a file extension, run the scan, review the results, and export the manifest.
 
-## Using the scanner programmatically
+You can also launch the module directly:
+
+```bash
+python gui/main.py
+```
+
+## Using the Application
+
+### 1. Choose a directory
+
+Click **Browse** and select the directory that should be audited.
+
+### 2. Add an optional extension filter
+
+Examples:
+
+```text
+py
+pdf
+json
+```
+
+Leave the field empty to include all files.
+
+### 3. Start the scan
+
+Click **Start Scan**.
+
+The scanner recursively inspects the selected directory and the GUI updates its status while the worker is running in the background.
+
+### 4. Review the manifest
+
+Discovered files appear in the results table with their metadata.
+
+### 5. Export the report
+
+Click **Export to CSV**, choose the output location, and save the manifest.
+
+## Programmatic Usage
+
+The core scanner can also be used without the GUI.
+
+### Scan a directory
+
+```python
+from core.scanner import scan_directory
+
+records = scan_directory(
+    target_dir="/path/to/project",
+    extension_filter="pdf",
+)
+
+for record in records:
+    print(record)
+```
+
+### Export scan results
 
 ```python
 from core.scanner import export_to_csv, scan_directory
 
-records = scan_directory(r"C:\path\to\audit", extension_filter="pdf")
-output = export_to_csv(records, r"C:\path\to\manifest.csv")
+records = scan_directory("/path/to/project")
+output = export_to_csv(records, "output/manifest.csv")
 
 print(f"Created manifest: {output}")
 ```
 
-The extension filter accepts either form:
+### Extension filter behavior
+
+Both forms are accepted:
 
 ```python
-scan_directory(r"C:\path\to\audit", extension_filter="pdf")
-scan_directory(r"C:\path\to\audit", extension_filter=".pdf")
+scan_directory("/path/to/project", extension_filter="pdf")
+scan_directory("/path/to/project", extension_filter=".pdf")
 ```
 
-For a simple manual check of the scanner, run:
+## CSV Manifest Example
 
-```powershell
+A generated manifest follows a predictable schema:
+
+```csv
+Filename,Extension,Parent_Folder,Size_MB,Last_Modified,Full_Path
+config.json,.json,/home/user/project,0.0025,2026-09-14 10:32:15,/home/user/project/config.json
+```
+
+This structure makes the exported report convenient for:
+
+* Spreadsheet inspection
+* Data analysis
+* File inventory workflows
+* Automation pipelines
+* Archival and auditing tasks
+
+## Logging
+
+Application logs are written to:
+
+```text
+logs/app.log
+```
+
+The logging system provides three views of the same application activity:
+
+| Destination    | Purpose                      |
+| -------------- | ---------------------------- |
+| Console        | Developer/runtime visibility |
+| `logs/app.log` | Persistent diagnostics       |
+| GUI log panel  | User-facing live feedback    |
+
+Example log messages include scan start/completion events, skipped unreadable files, and export failures.
+
+## Testing and Verification
+
+The repository includes two manual smoke-test scripts.
+
+### Core scanner test
+
+```bash
 python test.py
 ```
 
-This scans the current directory and writes a sample manifest to `logs/test_manifest.csv`.
+This exercises the scanner and CSV generation path.
 
-## Development status
+### Worker/thread test
 
-The project already has the main building blocks in place:
+```bash
+python test2.py
+```
 
-- Core directory scanning and CSV serialization
-- Extension filtering
-- Background worker signals for status, progress, completion, and errors
-- A GUI layout with a metadata table and live log panel
+This exercises the worker and Qt signal flow used for background execution.
 
-The next implementation tasks are:
+For production expansion, these scripts can serve as a starting point for a more formal automated test suite.
 
-1. Finish scan-thread signal connections in `gui/main.py`.
-2. Start and clean up the worker thread reliably after every scan.
-3. Implement cancellation behavior and restore GUI controls after cancellation or failure.
-4. Add an output-file dialog and connect it to `export_to_csv`.
-5. Add automated tests and a dependency manifest such as `requirements.txt` or `pyproject.toml`.
+## Design Principles
 
-### Completed: Day 1
+This project follows several practical software-engineering principles:
 
-- Added a **Browse** workflow that opens a folder picker and places the selected target directory into the application input field.
+### Separation of concerns
 
-## Operational notes
+File-system logic, background execution, GUI behavior, and logging are separated into different modules.
 
-- Scans are recursive. Selecting a broad directory can take time and may include virtual environments, source-control metadata, or other generated folders.
-- Files that cannot be read because of permissions or disappearance during a scan are skipped and logged when handled by the scanner.
-- Generated manifests include absolute file paths. Treat exported CSVs as potentially sensitive when sharing them.
+### Reusable core logic
 
-## Contributing
+The scanner does not depend on the GUI. The same scanning and export functions can be imported and used from another Python program.
 
-Contributions are welcome. Please keep core scanning logic, Qt worker behavior, and GUI code separated; add or update tests for behavior changes; and avoid committing generated logs or manifests unless they are intentional fixtures.
+### Type-aware interfaces
+
+Function signatures use modern Python type hints such as `Path`, `Optional`, lists, dictionaries, and unions.
+
+### Non-blocking desktop UX
+
+Long-running I/O work is moved away from the GUI event loop rather than performing the scan directly inside a button callback.
+
+### Defensive file handling
+
+Individual file failures are handled locally so a single inaccessible or missing file does not necessarily abort an entire directory audit.
+
+## Operational and Privacy Notes
+
+Scanning is recursive. Selecting a very broad directory can significantly increase the number of files processed and may include folders such as virtual environments, source-control metadata, caches, or generated output.
+
+The generated manifest contains **absolute file paths**. Treat exported CSV files and application logs as potentially sensitive when sharing them with other people or publishing them online.
+
+## Typical Use Cases
+
+CSV Manifest Generator is useful for:
+
+* File-system auditing
+* Digital asset inventories
+* Project directory inspection
+* Backup preparation
+* Document and media inventory
+* Data-cleanup workflows
+* Migration planning
+* Automation and pipeline tooling
+
+## Why This Project Matters
+
+This project demonstrates more than basic file handling. It combines several real-world desktop-automation concepts into one application:
+
+```text
+Python file-system programming
+        +
+Structured data extraction
+        +
+CSV serialization
+        +
+Desktop GUI development
+        +
+Background threading
+        +
+Signal-based communication
+        +
+Logging and diagnostics
+        +
+Error handling
+        ↓
+Practical automation software
+```
+
+It is a compact example of how a Python script can evolve into a reusable desktop tool with a clear internal architecture.
+
+## Repository
+
+GitHub: https://github.com/asadsajjadcodes-maker/csv_manifest_generator
+
+## Author
+
+**Asad Sajjad**
+
+Python developer focused on automation, desktop tooling, and production-oriented development workflows.
