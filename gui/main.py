@@ -169,37 +169,58 @@ class MainWindow(QMainWindow):
 
 
        # Connect worker signals to GUI update slots for real-time feedback
-       
+       self.scan_worker.status_updated.connect(self.update_status)
+       self.scan_worker.progress_updated.connect(self.update_status)
+       self.scan_worker.finished.connect(self.on_scan_finished)
+       self.scan_worker.error_occurred.connect(self.on_scan_error)
 
+       # Connect worker completion signals to thread cleanup methods to avoid memory leaks 
+       self.scan_worker.finished.connect(self.scan_thread.quit) # QThread.quit() will stop the thread's event loop and allow it to finish gracefully
+       self.scan_worker.finished.connect(self.scan_worker.deleteLater) # deleteLater() will schedule the worker object for deletion once all pending events have been processed
+       self.scan_worker.finished.connect(self.scan_thread.deleteLater) # deleteLater() will schedule the thread object for deletion once all pending events have been processed
 
+       # Start non-blocking thread execution.
+       self.scan_thread.start() # This will trigger the run() method of the ScanWorker in a separate thread, allowing the GUI to remain responsive during the scan process.
 
-
-
-           
-       
-
-
+    
     def cancel_scan(self):
-       pass
+       if self.scan_worker:
+           self.scan_worker.cancel()
+           self.cancel_btn.setEnabled(False)
 
-    
+    @Slot(str)
     def update_status(self, text: str):
-        pass
+        self.status_label.setText(f"Status: {text}")
 
-    
+    @Slot(int)
     def update_progress(self, count: int):
-        pass
+        self.status_label.setText(f"Status : Scanning..... indexed '{count}' files.")
 
-   
+    @Slot(list)
     def on_scan_finished(self, results: list):
-        pass
+        self.scanned_data = results
+        self.populate_table(results)
 
-        
+        self.scan_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
+        self.export_btn.setEnabled(len(results) > 0)
 
-    
+        self.status_label.setText(f"Status: Scan completed.  '{len(results)}' files indexed.")
+
+    @Slot(str)
     def on_scan_error(self, err_msg: str):
-        pass
+        self.scan_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
 
+        self.status_label.setText("Status: Error occured during the scan.")
+
+        QMessageBox.critical(
+            self,
+            "Execution Error",
+            f"Scan failed with error.. \n{err_msg}"
+        )
+
+    @Slot(list)
     def populate_table(self, data: list):
         """Populates QTableWidget with metadata extracted from files."""
         self.results_table.setRowCount(len(data)) # Create rows accourding to the len of the data 
@@ -214,7 +235,42 @@ class MainWindow(QMainWindow):
 
 
     def export_csv(self):
-        pass
+        if not self.scanned_data:
+            QMessageBox.warning(
+                self,
+                "Export Error",
+                "No scanned data available to export"
+            )
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Manifest CSV",
+            "manifest.csv",
+            "CSV Files (*.csv)"
+
+        )
+
+
+        if file_path:
+            try:
+                out_file = export_to_csv(self.scanned_data, file_path)
+                QMessageBox.information(
+                       self,
+                                "Export Successful",
+                                f"Csv file saved to: \n {out_file}"
+                            )
+
+            except Exception as e:
+                logger.exception(f"Failed to export csv file : {e}")
+                QMessageBox.critical(
+                    self,
+                    "Export Failed",
+                    f"Failed to export csv file to : \n {e}"
+                )
+
+
+
        
 
 

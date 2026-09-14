@@ -1,0 +1,18 @@
+2026-09-14 05:30:32 [INFO] [main.py]:init_ui:117 - tripple logging is working
+2026-09-14 05:30:51 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\'
+2026-09-14 05:30:53 [INFO] [scanner.py]:scan_directory:69 - Scan cancelled by user.
+2026-09-14 05:30:53 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '8340' matching files.
+2026-09-14 05:31:47 [INFO] [main.py]:init_ui:117 - tripple logging is working
+2026-09-14 05:32:06 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\'
+2026-09-14 05:32:10 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '17203' matching files.
+2026-09-14 05:32:52 [INFO] [scanner.py]:export_to_csv:117 - Successfully generated manifest CSV: E:\github\csv_manifest_generator\manifest.csv
+2026-09-14 05:34:08 [INFO] [main.py]:init_ui:117 - tripple logging is working
+2026-09-14 05:34:45 [INFO] [main.py]:init_ui:117 - tripple logging is working
+2026-09-14 05:35:05 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\New folder'
+2026-09-14 05:35:05 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '0' matching files.
+2026-09-14 05:35:18 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\New folder'
+2026-09-14 05:35:18 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '0' matching files.
+2026-09-14 05:35:20 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\New folder'
+2026-09-14 05:35:20 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '0' matching files.
+2026-09-14 05:35:21 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\New folder'
+2026-09-14 05:35:21 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '0' matching files.

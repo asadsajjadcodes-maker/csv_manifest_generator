@@ -30,46 +30,25 @@ class ScanWorker(QObject):
         # Execute the file system scan on the background thread.
 
         try:
-            if not self.target_dir.exists() and not self.target_dir.is_dir():
+            if not self.target_dir.exists() or not self.target_dir.is_dir():
                 self.error_occurred.emit(f"Invalid directory path: {self.target_dir}")
                 return
 
             self.status_updated.emit(f"Starting scan in : {self.target_dir}")
 
-            # Normalize extension filter 
-            target_ext = self.extension_filter.lower().strip() if self.extension_filter else None
-            # make extension lower and remove spaces from start and end if extension is given else None 
-
-            if target_ext and not target_ext.startswith("."):
-                target_ext = f".{target_ext}"
-
-            manifest_data : List[Dict[str, Any]] = []
-            file_count = 0
-
-            for path in self.target_dir.rglob("*"):
-                if self._is_cancelled:
-                    self.status_updated.emit("Scan cancelled by user.")
-                    break
-
-                if path.is_file():
-                    if target_ext and path.suffix.lower() != target_ext:
-                        continue
-                    metadata = get_file_metadata(path)
-                    if metadata:
-                        manifest_data.append(metadata)
-                        file_count += 1
-
-
-                        # Emit status update every 50 files to keep gui responsive without spamming
-                        if file_count % 50 == 0:
-                            self.progress_updated.emit(file_count)
-                            self.status_updated.emit(f"Scanned {file_count} files.......")
-
+            # Call scan_directory with a cancellation callback to check _is_cancelled flag
+            manifest_data = scan_directory(
+                self.target_dir, 
+                self.extension_filter,
+                is_cancelled_callback=lambda: self._is_cancelled
+            )
 
             if not self._is_cancelled:
-                self.progress_updated.emit(file_count)
+                self.progress_updated.emit(len(manifest_data))
                 self.status_updated.emit(f"Completed! Total files indexed: {len(manifest_data)}")
                 self.finished.emit(manifest_data)
+            else:
+                self.status_updated.emit("Scan cancelled by user.")
 
         except Exception as err:
             logger.exception("Unexpected error during thread scan execution.")

@@ -1,10 +1,13 @@
 import logging
 from gui.ui_logger import GuiHandler
+from pathlib import Path
 
 # Global instance
 gui_handler = GuiHandler()
 gui_formatter = logging.Formatter(fmt="%(levelname)s - %(message)s")
 gui_handler.setFormatter(gui_formatter)
+log_path = Path("logs").resolve()
+log_path.mkdir(parents= True, exist_ok= True)
 
 def setup_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
@@ -14,7 +17,7 @@ def setup_logger(name: str) -> logging.Logger:
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
 
-        file_handler = logging.FileHandler("app.log", mode="a", encoding="utf-8")
+        file_handler = logging.FileHandler(log_path / "app.log", mode="a", encoding="utf-8")
         file_handler.setLevel(logging.INFO)
 
         console_formatter = logging.Formatter(

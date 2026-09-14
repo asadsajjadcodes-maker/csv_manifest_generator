@@ -40,7 +40,7 @@ def get_file_metadata(file_path: Path) -> Optional[dict[str, Any]]:
 
 #================================================================================================================================
 
-def scan_directory(target_dir: str | Path, extension_filter: Optional[str] = None) -> List[dict[str, Any]]:
+def scan_directory(target_dir: str | Path, extension_filter: Optional[str] = None, is_cancelled_callback=None) -> List[dict[str, Any]]:
 
     # Convert string or Path object to the absolute resolved Path instance.
     base_path = Path(target_dir).resolve()
@@ -64,6 +64,11 @@ def scan_directory(target_dir: str | Path, extension_filter: Optional[str] = Non
 
 
     for path in base_path.rglob("*"):
+        # Check if cancellation was requested by calling the callback function
+        if is_cancelled_callback and is_cancelled_callback():
+            logger.info("Scan cancelled by user.")
+            break
+
         if path.is_file():
             # Apply file extension filter if set: skip if it does not match
             if target_ext and path.suffix.lower() != target_ext:
