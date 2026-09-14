@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.log_output)
 
         gui_handler.log_message.connect(self.show_log)
-        logger.info("tripple logging is working")
+        logger.info("triple logging is working")
 
     
 
@@ -170,7 +170,7 @@ class MainWindow(QMainWindow):
 
        # Connect worker signals to GUI update slots for real-time feedback
        self.scan_worker.status_updated.connect(self.update_status)
-       self.scan_worker.progress_updated.connect(self.update_status)
+       self.scan_worker.progress_updated.connect(self.update_progress)
        self.scan_worker.finished.connect(self.on_scan_finished)
        self.scan_worker.error_occurred.connect(self.on_scan_error)
 
@@ -187,6 +187,9 @@ class MainWindow(QMainWindow):
        if self.scan_worker:
            self.scan_worker.cancel()
            self.cancel_btn.setEnabled(False)
+           self.scan_btn.setEnabled(True)
+           
+
 
     @Slot(str)
     def update_status(self, text: str):
@@ -205,7 +208,8 @@ class MainWindow(QMainWindow):
         self.cancel_btn.setEnabled(False)
         self.export_btn.setEnabled(len(results) > 0)
 
-        self.status_label.setText(f"Status: Scan completed.  '{len(results)}' files indexed.")
+        if not self.scan_worker._is_cancelled:
+            self.status_label.setText(f"Status: Scan completed.  '{len(results)}' files indexed.")
 
     @Slot(str)
     def on_scan_error(self, err_msg: str):

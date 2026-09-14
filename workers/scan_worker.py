@@ -53,6 +53,8 @@ class ScanWorker(QObject):
         except Exception as err:
             logger.exception("Unexpected error during thread scan execution.")
             self.error_occurred.emit(str(err))
+        finally:
+            self.finished.emit(manifest_data)
 
     def cancel(self):
         # Flag the worker thread to stop scanning gracefully.
