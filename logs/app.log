@@ -1,7 +1,0 @@
-2026-09-15 03:20:01 [INFO] [main.py]:init_ui:117 - triple logging is working
-2026-09-15 03:28:09 [INFO] [main.py]:init_ui:117 - triple logging is working
-2026-09-15 03:28:20 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\'
-2026-09-15 03:28:21 [INFO] [scanner.py]:scan_directory:69 - Scan cancelled by user.
-2026-09-15 03:28:21 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '3929' matching files.
-2026-09-15 03:28:41 [INFO] [scanner.py]:scan_directory:56 - Starting scan in directory: 'E:\'
-2026-09-15 03:28:45 [INFO] [scanner.py]:scan_directory:84 - Scan complete. Found '17226' matching files.

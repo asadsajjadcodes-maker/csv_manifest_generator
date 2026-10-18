@@ -1,4 +1,16 @@
+<div align="center">
+
 # CSV Manifest Generator
+
+### Responsive Desktop File-System Auditing & CSV Inventory Tool Built with Python & PySide6
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PySide6](https://img.shields.io/badge/PySide6-Qt_for_Python-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
+[![Architecture](https://img.shields.io/badge/Architecture-QThread_%2B_Signals-007ACC?style=for-the-badge)](https://github.com/asadsajjadcodes-maker/csv_manifest_generator)
+
+</div>
+
+---
 
 A desktop file-system auditing and inventory tool built with **Python** and **PySide6**.
 
@@ -168,10 +180,8 @@ csv_manifest_generator/
 │   └── logger.py
 │       └── setup_logger()
 │
-├── logs/
-│   └── Generated logs and test/output artifacts
+├── logs/                   # Auto-generated runtime logs (git-ignored)
 │
-├── manifest.csv
 ├── requirements.txt
 ├── test.py
 ├── test2.py
